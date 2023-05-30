@@ -1,37 +1,24 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>GeoJSON Map</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-  <style>
-    #map {
-      height: 500px;
-    }
-  </style>
+  <title>Leaflet GeoJSON Example</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
 </head>
 <body>
   <div id="map"></div>
-
-  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.23.0/axios.min.js"></script>
   <script>
-    // Create a Leaflet map instance
-    var map = L.map('map').setView([0, 0], 2);
+    // Create a map
+    var map = L.map('map').setView([37.775, -122.418], 13);
 
-    // Add a tile layer to the map
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
+    // Load the GeoJSON file
+    var geojson = L.geoJSON('https://raw.githubusercontent.com/coredatascientist/CSD_Projects/main/CSD_Projects.geojson');
 
-    // Load GeoJSON data
-    axios.get('https://raw.githubusercontent.com/coredatascientist/CSD_Projects/main/CSD_Projects.geojson')
-      .then(function(response) {
-        var geojsonLayer = L.geoJSON(response.data).addTo(map);
-        map.fitBounds(geojsonLayer.getBounds());
-      })
-      .catch(function(error) {
-        console.log('Error loading GeoJSON data:', error);
-      });
+    // Add the GeoJSON layer to the map
+    geojson.addTo(map);
   </script>
 </body>
 </html>
+
+
+   
