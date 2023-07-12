@@ -1,8 +1,206 @@
 <!DOCTYPE html>
 <html>
+<head>
+  <meta charset="utf-8" />
+  <title>CSD Facility Projects Map</title>
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.4.1/mapbox-gl.js"></script>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.4.1/mapbox-gl.css" rel="stylesheet" />
+  <style>
+    body { margin: 0; padding: 0; }
+    #map { position: absolute; top: 0; bottom: 30%; width: 100%; }
+    #search-box { position: absolute; top: 70%; bottom: 0; width: 100%; background: #fff; padding: 10px; overflow-y: scroll; }
+    #search-input { width: 100%; padding: 10px; }
+    #search-button { margin-top: 10px; }
+    #search-results { margin-top: 20px; padding-left: 10px; padding-right: 10px; }  /* Added padding to the sides */
+    #search-results table { border-collapse: collapse; width: 100%; }
+    #search-results table, #search-results th, #search-results td { border: 1px solid #ddd; padding: 8px; }
+    #search-results th { padding-top: 12px; padding-bottom: 12px; text-align: left; background-color: #f1f1f1; color: black; }  /* Updated background color to light grey */
+    .button { padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; }
+  </style>
+</head>
 <body>
+  <div id="map"></div>
+  <div id="search-box">
+    <input type="text" id="search-input" placeholder="Search...">
+    <button id="search-button" onclick="performSearch()">Search</button>
+    <button class="button" onclick="exportFilteredTableToCSV('search-table', 'filtered-data.csv')">Download Filtered as CSV</button>
+    <button class="button" onclick="location.reload()">Refresh</button>
+    <script>
+      function exportFilteredTableToCSV(tableID, filename) {
+        var csv = [];
+        var rows = document.getElementById(tableID).querySelectorAll("tr");
+        for (var i = 0; i < rows.length; i++) {
+          var row = [];
+          var cols = rows[i].querySelectorAll("td, th");
+          for (var j = 0; j < cols.length; j++)
+            row.push(cols[j].innerText);
+          csv.push(row.join(","));
+        }
+        var csvString = csv.join("\n");
+        var a = document.createElement("a");
+        a.href = "data:text/csv;charset=utf-8," + encodeURIComponent(csvString);
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
+      function performSearch() {
+        var searchInput = document.getElementById('search-input');
+        var searchValue = searchInput.value.toLowerCase();
+        filteredData = geojsonData.features.filter(function(feature) {
+          for (var key in feature.properties) {
+            if (typeof feature.properties[key] === 'string' && feature.properties[key].toLowerCase().includes(searchValue)) {
+              return true;
+            }
+          }
+          return false;
+        });
+        var filterIDs = filteredData.map(function(feature) {
+          return feature.id;
+        });
+        map.setFilter('my-layer', ['in', 'id'].concat(filterIDs));
+        var searchResults = document.getElementById('search-results');
+        searchResults.innerHTML = '';
+        if (filteredData.length > 0) {
+          var table = document.createElement('table');
+          table.className = 'search-table';
+          table.id = 'search-table';
+          var headerRow = table.insertRow();
+          for (var key in filteredData[0].properties) {
+            var th = document.createElement('th');
+            th.innerHTML = key;
+            headerRow.appendChild(th);
+          }
+          filteredData.forEach(function(feature) {
+            var row = table.insertRow();
+            for (var key in feature.properties) {
+              var cell = row.insertCell();
+              cell.innerHTML = feature.properties[key];
+            }
+          });
+          searchResults.appendChild(table);
+        } else {
+          searchResults.innerHTML = 'No results found.';
+        }
+        if (map.getLayer('search-layer')) {
+          map.removeLayer('search-layer');
+          map.removeSource('search-layer');
+        }
+        map.addSource('search-layer', {
+          type: 'geojson',
+          data: {
+            type: 'FeatureCollection',
+            features: filteredData
+          }
+        });
+        map.addLayer({
+          id: 'search-layer',
+          type: 'circle',
+          source: 'search-layer',
+          paint: {
+            'circle-radius': 5,
+            'circle-color': '#888888', // Dark grey color
+            'circle-stroke-color': 'hsl(107, 0%, 0%)',
+            'circle-stroke-width': 1,
+            'circle-stroke-opacity': 0.34
+          }
+        });
+        if (filteredData.length > 0) {
+          var bounds = new mapboxgl.LngLatBounds();
+          filteredData.forEach(function(feature) {
+            bounds.extend(feature.geometry.coordinates);
+          });
+          map.fitBounds(bounds, { padding: 50 });
+        }
+      }
+    </script>
+    <div id="search-results"></div>
+  </div>
+  <script>
+    mapboxgl.accessToken = 'pk.eyJ1IjoiZGdyemVzaWstY3NkIiwiYSI6ImNsaWFsOHJpZjAzeG8zZ3BtZGM1Z2JmcWkifQ.0wrP4PZx4Q8wt8IYh0w6IA';
 
-<script src="https://gist.github.com/coredatascientist/35934bfa0e19a530c3684fbfaef15fe5.js"></script>
+    var map = new mapboxgl.Map({
+      container: 'map',
+      style: 'mapbox://styles/dgrzesik-csd/cliluzdiz010s01qh4b0yg49u',
+      center: [0, 0],
+      zoom: 1
+    });
 
+    var geojsonData; // Variable to store the GeoJSON data
+    var filteredData = [];
+    var popup = new mapboxgl.Popup({
+      closeButton: false,
+      closeOnClick: false
+    });
+
+    fetch('https://gist.githubusercontent.com/coredatascientist/f8345d835f634cadf524875275aea0c1/raw/9b3289ec7f3fefa7d2e23dd09ef62773a538c376/CSD_Projects.json')
+      .then(response => response.json())
+      .then(data => {
+        // Add a unique id to each feature for the Mapbox filter
+        data.features = data.features.map((feature, index) => {
+          feature.id = index;
+          return feature;
+        });
+
+    geojsonData = data; // Store the data for use in the search function
+
+    map.on('load', function() {
+      map.addSource('my-data', {
+        type: 'geojson',
+        data: geojsonData
+      });
+
+      map.addLayer({
+        id: 'my-layer',
+        type: 'circle',
+        source: 'my-data',
+        paint: {
+          'circle-radius': 5,
+          'circle-color': 'hsla(89, 0%, 100%, 0.74)',
+          'circle-stroke-color': 'hsl(107, 0%, 0%)',
+          'circle-stroke-width': 1,
+          'circle-stroke-opacity': 0.34
+        }
+      });
+
+      map.on('mousemove', 'my-layer', function(e) {
+        var properties = e.features[0].properties;
+        var coordinates = e.features[0].geometry.coordinates.slice();
+
+        var html = '';
+        for (var key in properties) {
+          html += '<strong>' + key + '</strong>: ' + properties[key] + '<br>';
+        }
+
+        popup.setLngLat(coordinates)
+          .setHTML(html)
+          .addTo(map);
+      });
+
+      map.on('mouseleave', 'my-layer', function() {
+        popup.remove();
+      });
+      
+      map.on('mousemove', 'search-layer', function(e) {
+        var properties = e.features[0].properties;
+        var coordinates = e.features[0].geometry.coordinates.slice();
+
+        var html = '';
+        for (var key in properties) {
+          html += '<strong>' + key + '</strong>: ' + properties[key] + '<br>';
+        }
+
+        popup.setLngLat(coordinates)
+          .setHTML(html)
+          .addTo(map);
+      });
+
+      map.on('mouseleave', 'search-layer', function() {
+        popup.remove();
+      });
+    });
+  });
+  </script>
 </body>
 </html>
