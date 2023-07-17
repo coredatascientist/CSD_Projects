@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta http-equiv="refresh" content="0">
   <meta charset="utf-8" />
   <title>CSD Facility Projects Map</title>
   <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
@@ -27,106 +26,107 @@
     <button id="search-button" onclick="performSearch()">Search</button>
     <button class="button" onclick="exportFilteredTableToTabDelimited('search-table', 'filtered-data.txt')">Download Filtered as Tab-Delimited Text</button>
     <button class="button" onclick="location.reload()">Refresh</button>
+    <script>
+      function handleSearchKeyPress(event) {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          performSearch();
+        }
+      }
+
+      function exportFilteredTableToTabDelimited(tableID, filename) {
+        var tabDelimited = [];
+        var rows = document.getElementById(tableID).querySelectorAll("tr");
+        for (var i = 0; i < rows.length; i++) {
+          var row = [];
+          var cols = rows[i].querySelectorAll("td, th");
+          for (var j = 0; j < cols.length; j++)
+            row.push(cols[j].innerText);
+          tabDelimited.push(row.join("\t"));
+        }
+        var tabDelimitedString = tabDelimited.join("\n");
+        var a = document.createElement("a");
+        a.href = "data:text/plain;charset=utf-8," + encodeURIComponent(tabDelimitedString);
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
+      
+      function performSearch() {
+        var searchInput = document.getElementById('search-input');
+        var searchValue = searchInput.value.toLowerCase();
+        filteredData = geojsonData.features.filter(function(feature) {
+          for (var key in feature.properties) {
+            if (typeof feature.properties[key] === 'string' && feature.properties[key].toLowerCase().includes(searchValue)) {
+              return true;
+            }
+          }
+          return false;
+        });
+        var filterIDs = filteredData.map(function(feature) {
+          return feature.id;
+        });
+        map.setFilter('my-layer', ['in', 'id'].concat(filterIDs));
+        var searchResults = document.getElementById('search-results');
+        searchResults.innerHTML = '';
+        if (filteredData.length > 0) {
+          var table = document.createElement('table');
+          table.className = 'search-table';
+          table.id = 'search-table';
+          var headerRow = table.insertRow();
+          for (var key in filteredData[0].properties) {
+            var th = document.createElement('th');
+            th.innerHTML = key;
+            headerRow.appendChild(th);
+          }
+          filteredData.forEach(function(feature) {
+            var row = table.insertRow();
+            for (var key in feature.properties) {
+              var cell = row.insertCell();
+              cell.innerHTML = feature.properties[key];
+            }
+          });
+          searchResults.appendChild(table);
+        } else {
+          searchResults.innerHTML = 'No results found.';
+        }
+        if (map.getLayer('search-layer')) {
+          map.removeLayer('search-layer');
+          map.removeSource('search-layer');
+        }
+        map.addSource('search-layer', {
+          type: 'geojson',
+          data: {
+            type: 'FeatureCollection',
+            features: filteredData
+          }
+        });
+        map.addLayer({
+          id: 'search-layer',
+          type: 'circle',
+          source: 'search-layer',
+          paint: {
+            'circle-radius': 5,
+            'circle-color': '#000000', // Black
+            'circle-stroke-color': 'hsl(107, 0%, 0%)',
+            'circle-stroke-width': 1,
+            'circle-stroke-opacity': 0.34
+          }
+        });
+        if (filteredData.length > 0) {
+          var bounds = new mapboxgl.LngLatBounds();
+          filteredData.forEach(function(feature) {
+            bounds.extend(feature.geometry.coordinates);
+          });
+          map.fitBounds(bounds, { padding: 50 });
+        }
+      }
+    </script>
     <div id="search-results"></div>
   </div>
-
-  <script>
-    function handleSearchKeyPress(event) {
-      if (event.key === "Enter") {
-        event.preventDefault();
-        performSearch();
-      }
-    }
-
-    function exportFilteredTableToTabDelimited(tableID, filename) {
-      var tabDelimited = [];
-      var rows = document.getElementById(tableID).querySelectorAll("tr");
-      for (var i = 0; i < rows.length; i++) {
-        var row = [];
-        var cols = rows[i].querySelectorAll("td, th");
-        for (var j = 0; j < cols.length; j++)
-          row.push(cols[j].innerText);
-        tabDelimited.push(row.join("\t"));
-      }
-      var tabDelimitedString = tabDelimited.join("\n");
-      var a = document.createElement("a");
-      a.href = "data:text/plain;charset=utf-8," + encodeURIComponent(tabDelimitedString);
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    }
-    
-    function performSearch() {
-      var searchInput = document.getElementById('search-input');
-      var searchValue = searchInput.value.toLowerCase();
-      filteredData = geojsonData.features.filter(function(feature) {
-        for (var key in feature.properties) {
-          if (typeof feature.properties[key] === 'string' && feature.properties[key].toLowerCase().includes(searchValue)) {
-            return true;
-          }
-        }
-        return false;
-      });
-      var filterIDs = filteredData.map(function(feature) {
-        return feature.id;
-      });
-      map.setFilter('my-layer', ['in', 'id'].concat(filterIDs));
-      var searchResults = document.getElementById('search-results');
-      searchResults.innerHTML = '';
-      if (filteredData.length > 0) {
-        var table = document.createElement('table');
-        table.className = 'search-table';
-        table.id = 'search-table';
-        var headerRow = table.insertRow();
-        for (var key in filteredData[0].properties) {
-          var th = document.createElement('th');
-          th.innerHTML = key;
-          headerRow.appendChild(th);
-        }
-        filteredData.forEach(function(feature) {
-          var row = table.insertRow();
-          for (var key in feature.properties) {
-            var cell = row.insertCell();
-            cell.innerHTML = feature.properties[key];
-          }
-        });
-        searchResults.appendChild(table);
-      } else {
-        searchResults.innerHTML = 'No results found.';
-      }
-      if (map.getLayer('search-layer')) {
-        map.removeLayer('search-layer');
-        map.removeSource('search-layer');
-      }
-      map.addSource('search-layer', {
-        type: 'geojson',
-        data: {
-          type: 'FeatureCollection',
-          features: filteredData
-        }
-      });
-      map.addLayer({
-        id: 'search-layer',
-        type: 'circle',
-        source: 'search-layer',
-        paint: {
-          'circle-radius': 5,
-          'circle-color': '#000000', // Black
-          'circle-stroke-color': 'hsl(107, 0%, 0%)',
-          'circle-stroke-width': 1,
-          'circle-stroke-opacity': 0.34
-        }
-      });
-      if (filteredData.length > 0) {
-        var bounds = new mapboxgl.LngLatBounds();
-        filteredData.forEach(function(feature) {
-          bounds.extend(feature.geometry.coordinates);
-        });
-        map.fitBounds(bounds, { padding: 50 });
-      }
-    }
-  </script>
+</body>
+</html>
 
   <script>
     mapboxgl.accessToken = 'pk.eyJ1IjoiZGdyemVzaWstY3NkIiwiYSI6ImNsaWFsOHJpZjAzeG8zZ3BtZGM1Z2JmcWkifQ.0wrP4PZx4Q8wt8IYh0w6IA';
@@ -154,64 +154,64 @@
           return feature;
         });
 
-        geojsonData = data; // Store the data for use in the search function
+    geojsonData = data; // Store the data for use in the search function
 
-        map.on('load', function() {
-          map.addSource('my-data', {
-            type: 'geojson',
-            data: geojsonData
-          });
-
-          map.addLayer({
-            id: 'my-layer',
-            type: 'circle',
-            source: 'my-data',
-            paint: {
-              'circle-radius': 5,
-              'circle-color': 'hsla(89, 0%, 100%, 0.74)',
-              'circle-stroke-color': 'hsl(107, 0%, 0%)',
-              'circle-stroke-width': 1,
-              'circle-stroke-opacity': 0.34
-            }
-          });
-
-          map.on('mousemove', 'my-layer', function(e) {
-            var properties = e.features[0].properties;
-            var coordinates = e.features[0].geometry.coordinates.slice();
-
-            var html = '';
-            for (var key in properties) {
-              html += '<strong>' + key + '</strong>: ' + properties[key] + '<br>';
-            }
-
-            popup.setLngLat(coordinates)
-              .setHTML(html)
-              .addTo(map);
-          });
-
-          map.on('mouseleave', 'my-layer', function() {
-            popup.remove();
-          });
-
-          map.on('mousemove', 'search-layer', function(e) {
-            var properties = e.features[0].properties;
-            var coordinates = e.features[0].geometry.coordinates.slice();
-
-            var html = '';
-            for (var key in properties) {
-              html += '<strong>' + key + '</strong>: ' + properties[key] + '<br>';
-            }
-
-            popup.setLngLat(coordinates)
-              .setHTML(html)
-              .addTo(map);
-          });
-
-          map.on('mouseleave', 'search-layer', function() {
-            popup.remove();
-          });
-        });
+    map.on('load', function() {
+      map.addSource('my-data', {
+        type: 'geojson',
+        data: geojsonData
       });
+
+      map.addLayer({
+        id: 'my-layer',
+        type: 'circle',
+        source: 'my-data',
+        paint: {
+          'circle-radius': 5,
+          'circle-color': 'hsla(89, 0%, 100%, 0.74)',
+          'circle-stroke-color': 'hsl(107, 0%, 0%)',
+          'circle-stroke-width': 1,
+          'circle-stroke-opacity': 0.34
+        }
+      });
+
+      map.on('mousemove', 'my-layer', function(e) {
+        var properties = e.features[0].properties;
+        var coordinates = e.features[0].geometry.coordinates.slice();
+
+        var html = '';
+        for (var key in properties) {
+          html += '<strong>' + key + '</strong>: ' + properties[key] + '<br>';
+        }
+
+        popup.setLngLat(coordinates)
+          .setHTML(html)
+          .addTo(map);
+      });
+
+      map.on('mouseleave', 'my-layer', function() {
+        popup.remove();
+      });
+      
+      map.on('mousemove', 'search-layer', function(e) {
+        var properties = e.features[0].properties;
+        var coordinates = e.features[0].geometry.coordinates.slice();
+
+        var html = '';
+        for (var key in properties) {
+          html += '<strong>' + key + '</strong>: ' + properties[key] + '<br>';
+        }
+
+        popup.setLngLat(coordinates)
+          .setHTML(html)
+          .addTo(map);
+      });
+
+      map.on('mouseleave', 'search-layer', function() {
+        popup.remove();
+      });
+    });
+  });
   </script>
 </body>
 </html>
