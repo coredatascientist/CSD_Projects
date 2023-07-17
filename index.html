@@ -22,29 +22,37 @@
 <body>
   <div id="map"></div>
   <div id="search-box">
-    <input type="text" id="search-input" placeholder="Search...">
+    <input type="text" id="search-input" placeholder="Search..." onkeydown="handleSearchKeyPress(event)">
     <button id="search-button" onclick="performSearch()">Search</button>
-    <button class="button" onclick="exportFilteredTableToCSV('search-table', 'filtered-data.csv')">Download Filtered as CSV</button>
+    <button class="button" onclick="exportFilteredTableToTabDelimited('search-table', 'filtered-data.txt')">Download Filtered as Tab-Delimited Text</button>
     <button class="button" onclick="location.reload()">Refresh</button>
     <script>
-      function exportFilteredTableToCSV(tableID, filename) {
-        var csv = [];
+      function handleSearchKeyPress(event) {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          performSearch();
+        }
+      }
+
+      function exportFilteredTableToTabDelimited(tableID, filename) {
+        var tabDelimited = [];
         var rows = document.getElementById(tableID).querySelectorAll("tr");
         for (var i = 0; i < rows.length; i++) {
           var row = [];
           var cols = rows[i].querySelectorAll("td, th");
           for (var j = 0; j < cols.length; j++)
             row.push(cols[j].innerText);
-          csv.push(row.join(","));
+          tabDelimited.push(row.join("\t"));
         }
-        var csvString = csv.join("\n");
+        var tabDelimitedString = tabDelimited.join("\n");
         var a = document.createElement("a");
-        a.href = "data:text/csv;charset=utf-8," + encodeURIComponent(csvString);
+        a.href = "data:text/plain;charset=utf-8," + encodeURIComponent(tabDelimitedString);
         a.download = filename;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
       }
+      
       function performSearch() {
         var searchInput = document.getElementById('search-input');
         var searchValue = searchInput.value.toLowerCase();
@@ -117,6 +125,9 @@
     </script>
     <div id="search-results"></div>
   </div>
+</body>
+</html>
+
   <script>
     mapboxgl.accessToken = 'pk.eyJ1IjoiZGdyemVzaWstY3NkIiwiYSI6ImNsaWFsOHJpZjAzeG8zZ3BtZGM1Z2JmcWkifQ.0wrP4PZx4Q8wt8IYh0w6IA';
 
