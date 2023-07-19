@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <title>CSD Facility Projects Map</title>
-  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://api.mapbox.com/mapbox-gl-js/v2.4.1/mapbox-gl.js"></script>
   <link href="https://api.mapbox.com/mapbox-gl-js/v2.4.1/mapbox-gl.css" rel="stylesheet" />
   <style>
@@ -121,6 +121,8 @@
           });
           map.fitBounds(bounds, { padding: 50 });
         }
+        // Close the popup
+        popup.remove();
       }
     </script>
     <div id="search-results"></div>
@@ -136,14 +138,16 @@
       closeOnClick: false
     });
 
-    function initializeMap() {
-      map = new mapboxgl.Map({
-        container: 'map',
-        style: 'mapbox://styles/dgrzesik-csd/cliluzdiz010s01qh4b0yg49u',
-        center: [0, 0],
-        zoom: 1
-      });
+    mapboxgl.accessToken = 'pk.eyJ1IjoiZGdyemVzaWstY3NkIiwiYSI6ImNsaWFsOHJpZjAzeG8zZ3BtZGM1Z2JmcWkifQ.0wrP4PZx4Q8wt8IYh0w6IA';
 
+    map = new mapboxgl.Map({
+      container: 'map',
+      style: 'mapbox://styles/dgrzesik-csd/cliluzdiz010s01qh4b0yg49u',
+      center: [0, 0],
+      zoom: 1
+    });
+
+    map.on('load', function() {
       fetch('https://gist.githubusercontent.com/coredatascientist/f8345d835f634cadf524875275aea0c1/raw/9b3289ec7f3fefa7d2e23dd09ef62773a538c376/CSD_Projects.json')
         .then(response => response.json())
         .then(data => {
@@ -155,66 +159,85 @@
 
           geojsonData = data; // Store the data for use in the search function
 
-          map.on('load', function() {
-            map.addSource('my-data', {
-              type: 'geojson',
-              data: geojsonData
-            });
+          map.addSource('my-data', {
+            type: 'geojson',
+            data: geojsonData
+          });
 
-            map.addLayer({
-              id: 'my-layer',
-              type: 'circle',
-              source: 'my-data',
-              paint: {
-                'circle-radius': 5,
-                'circle-color': 'hsla(89, 0%, 100%, 0.74)',
-                'circle-stroke-color': 'hsl(107, 0%, 0%)',
-                'circle-stroke-width': 1,
-                'circle-stroke-opacity': 0.34
-              }
-            });
+          map.addLayer({
+            id: 'my-layer',
+            type: 'circle',
+            source: 'my-data',
+            paint: {
+              'circle-radius': 5,
+              'circle-color': 'hsla(89, 0%, 100%, 0.74)',
+              'circle-stroke-color': 'hsl(107, 0%, 0%)',
+              'circle-stroke-width': 1,
+              'circle-stroke-opacity': 0.34
+            }
+          });
 
-            map.on('mousemove', 'my-layer', function(e) {
-              var properties = e.features[0].properties;
-              var coordinates = e.features[0].geometry.coordinates.slice();
+          // Display the popup on 'mousemove' event
+          map.on('mousemove', 'my-layer', function(e) {
+            var properties = e.features[0].properties;
+            var coordinates = e.features[0].geometry.coordinates.slice();
 
-              var html = '';
-              for (var key in properties) {
-                html += '<strong>' + key + '</strong>: ' + properties[key] + '<br>';
-              }
+            var html = '';
+            for (var key in properties) {
+              html += '<strong>' + key + '</strong>: ' + properties[key] + '<br>';
+            }
 
-              popup.setLngLat(coordinates)
-                .setHTML(html)
-                .addTo(map);
-            });
+            popup.setLngLat(coordinates)
+              .setHTML(html)
+              .addTo(map);
+          });
 
-            map.on('mouseleave', 'my-layer', function() {
-              popup.remove();
-            });
+          // Display the popup on 'click' event
+          map.on('click', 'my-layer', function(e) {
+            var properties = e.features[0].properties;
+            var coordinates = e.features[0].geometry.coordinates.slice();
 
-            // Add event listeners for 'search-layer'
-            map.on('mousemove', 'search-layer', function(e) {
-              var properties = e.features[0].properties;
-              var coordinates = e.features[0].geometry.coordinates.slice();
+            var html = '';
+            for (var key in properties) {
+              html += '<strong>' + key + '</strong>: ' + properties[key] + '<br>';
+            }
 
-              var html = '';
-              for (var key in properties) {
-                html += '<strong>' + key + '</strong>: ' + properties[key] + '<br>';
-              }
+            popup.setLngLat(coordinates)
+              .setHTML(html)
+              .addTo(map);
+          });
 
-              popup.setLngLat(coordinates)
-                .setHTML(html)
-                .addTo(map);
-            });
+          // Add event listeners for 'search-layer'
+          map.on('mousemove', 'search-layer', function(e) {
+            var properties = e.features[0].properties;
+            var coordinates = e.features[0].geometry.coordinates.slice();
 
-            map.on('mouseleave', 'search-layer', function() {
-              popup.remove();
-            });
+            var html = '';
+            for (var key in properties) {
+              html += '<strong>' + key + '</strong>: ' + properties[key] + '<br>';
+            }
+
+            popup.setLngLat(coordinates)
+              .setHTML(html)
+              .addTo(map);
+          });
+
+          map.on('click', 'search-layer', function(e) {
+            var properties = e.features[0].properties;
+            var coordinates = e.features[0].geometry.coordinates.slice();
+
+            var html = '';
+            for (var key in properties) {
+              html += '<strong>' + key + '</strong>: ' + properties[key] + '<br>';
+            }
+
+            popup.setLngLat(coordinates)
+              .setHTML(html)
+              .addTo(map);
           });
         });
-    }
+    });
 
-    initializeMap();
   </script>
 </body>
 </html>
