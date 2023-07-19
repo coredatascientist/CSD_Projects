@@ -252,37 +252,6 @@
                 .addTo(map)
                 .setMaxWidth('none'); // Remove the maximum width limitation for the popup
             });
-
-            // Add event listeners for 'search-layer'
-            map.on('mousemove', 'search-layer', function(e) {
-              var properties = e.features[0].properties;
-              var coordinates = e.features[0].geometry.coordinates.slice();
-
-              var html = '';
-              for (var key in properties) {
-                html += '<strong>' + key + '</strong>: ' + properties[key] + '<br>';
-              }
-
-              popup.setLngLat(coordinates)
-                .setHTML(html)
-                .addTo(map)
-                .setMaxWidth('none'); // Remove the maximum width limitation for the popup
-            });
-
-            map.on('click', 'search-layer', function(e) {
-              var properties = e.features[0].properties;
-              var coordinates = e.features[0].geometry.coordinates.slice();
-
-              var html = '';
-              for (var key in properties) {
-                html += '<strong>' + key + '</strong>: ' + properties[key] + '<br>';
-              }
-
-              popup.setLngLat(coordinates)
-                .setHTML(html)
-                .addTo(map)
-                .setMaxWidth('none'); // Remove the maximum width limitation for the popup
-            });
           });
 
         // Display the popup on 'mousemove' event for the original points
@@ -339,27 +308,6 @@
         });
 
       });
-
-      function adjustMapSize(value) {
-        var mapDiv = document.getElementById("map");
-        var searchBoxDiv = document.getElementById("search-box");
-        var searchResultsDiv = document.getElementById("search-results");
-
-        var totalHeight = document.documentElement.clientHeight;
-        var minMapHeight = totalHeight * 0.3; // Minimum map height as a percentage of the total height
-        var maxMapHeight = totalHeight * 0.95; // Maximum map height as a percentage of the total height
-        var minTableHeight = totalHeight * 0.2; // Minimum table height as a percentage of the total height
-
-        var mapHeight = Math.max(minMapHeight, Math.min(maxMapHeight, (value / 100) * totalHeight));
-        var tableHeight = Math.max(minTableHeight, totalHeight - mapHeight);
-        var searchBoxHeight = totalHeight - mapHeight - tableHeight;
-
-        mapDiv.style.bottom = `${searchBoxHeight + tableHeight}px`;
-        searchBoxDiv.style.top = `${mapHeight}px`;
-        searchResultsDiv.style.height = `${tableHeight}px`;
-
-        map.resize();
-      }
     </script>
     <div id="search-results"></div>
   </div>
