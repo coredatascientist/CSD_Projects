@@ -159,7 +159,7 @@
 
         var totalHeight = document.documentElement.clientHeight;
         var minMapHeight = totalHeight * 0.3; // Minimum map height as a percentage of the total height
-        var maxMapHeight = totalHeight * 0.95; // Maximum map height as a percentage of the total height
+        var maxMapHeight = totalHeight * 0.85; // Maximum map height as a percentage of the total height
         var minTableHeight = totalHeight * 0.2; // Minimum table height as a percentage of the total height
 
         var mapHeight = Math.max(minMapHeight, Math.min(maxMapHeight, (value / 100) * totalHeight));
@@ -335,7 +335,6 @@
             popup.setLngLat(coordinates)
               .setHTML(html)
               .addTo(map)
-              .setMaxWidth('none'); // Remove the maximum width limitation for the popup
           }
         });
 
