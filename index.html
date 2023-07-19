@@ -7,19 +7,18 @@
   <script src="https://api.mapbox.com/mapbox-gl-js/v2.4.1/mapbox-gl.js"></script>
   <link href="https://api.mapbox.com/mapbox-gl-js/v2.4.1/mapbox-gl.css" rel="stylesheet" />
   <style>
-  body { margin: 0; padding: 0; }
-  #map { position: absolute; top: 0; bottom: 30%; width: 100%; }
-  #search-box { position: absolute; top: 70%; bottom: 0; width: 100%; background: #fff; padding: 10px; overflow-y: scroll; }
-  #search-input { width: 100%; padding: 10px; }
-  #search-button { margin-top: 10px; }
-  #search-results { margin-top: 20px; padding-left: 10px; padding-right: 10px; }  /* Added padding to the sides */
-  #search-results table { border-collapse: collapse; width: 100%; font-family: "Helvetica", sans-serif; font-size: 10pt; }
-  #search-results table, #search-results th, #search-results td { border: 1px solid #ddd; padding: 8px; }
-  #search-results th { padding-top: 12px; padding-bottom: 12px; text-align: left; background-color: #f1f1f1; color: black; }  /* Updated background color to light grey */
-  .button { padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; }
-  .mapboxgl-popup-content { max-height: 200px; max-width: 300px; overflow-y: auto; }
-</style>
-
+    body { margin: 0; padding: 0; }
+    #map { position: absolute; top: 0; bottom: 50%; width: 100%; }
+    #search-box { position: absolute; top: 50%; bottom: 0; width: 100%; background: #fff; padding: 10px; overflow-y: scroll; }
+    #search-input { width: 100%; padding: 10px; }
+    #search-button { margin-top: 10px; }
+    #search-results { margin-top: 20px; padding-left: 10px; padding-right: 10px; }  /* Added padding to the sides */
+    #search-results table { border-collapse: collapse; width: 100%; font-family: "Helvetica", sans-serif; font-size: 10pt; }
+    #search-results table, #search-results th, #search-results td { border: 1px solid #ddd; padding: 8px; }
+    #search-results th { padding-top: 12px; padding-bottom: 12px; text-align: left; background-color: #f1f1f1; color: black; }  /* Updated background color to light grey */
+    .button { padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    .mapboxgl-popup-content { max-height: 200px; max-width: 300px; overflow-y: auto; }
+  </style>
 </head>
 <body>
   <div id="map"></div>
@@ -28,6 +27,9 @@
     <button id="search-button" onclick="performSearch()">Search</button>
     <button class="button" onclick="exportFilteredTableToTabDelimited('search-table', 'filtered-data.txt')">Download Filtered as Tab-Delimited Text</button>
     <button class="button" onclick="location.reload()">Refresh</button>
+    <div>
+      Map Height: <input type="range" id="map-height-range" min="0" max="100" step="1" value="50" oninput="adjustMapSize(this.value)">
+    </div>
     <script>
       function handleSearchKeyPress(event) {
         if (event.key === "Enter") {
@@ -54,7 +56,7 @@
         a.click();
         document.body.removeChild(a);
       }
-      
+
       function performSearch() {
         var searchInput = document.getElementById('search-input');
         var searchValue = searchInput.value.toLowerCase();
@@ -118,123 +120,151 @@
         });
         // Close the popup
         popup.remove();
+
+        // Zoom the map to the extent of the filtered data
+        var bounds = new mapboxgl.LngLatBounds();
+        filteredData.forEach(function(feature) {
+          bounds.extend(feature.geometry.coordinates);
+        });
+        map.fitBounds(bounds, { padding: 50 });
       }
+
+        function adjustMapSize(value) {
+          var mapDiv = document.getElementById("map");
+          var searchBoxDiv = document.getElementById("search-box");
+          var searchResultsDiv = document.getElementById("search-results");
+
+          var totalHeight = document.documentElement.clientHeight;
+          var minMapHeight = totalHeight * 0.3; // Minimum map height as a percentage of the total height
+          var maxMapHeight = totalHeight * 0.85; // Maximum map height as a percentage of the total height
+          var minTableHeight = totalHeight * 0.2; // Minimum table height as a percentage of the total height
+
+          var mapHeight = Math.max(minMapHeight, Math.min(maxMapHeight, (value / 100) * totalHeight));
+          var tableHeight = Math.max(minTableHeight, totalHeight - mapHeight);
+          var searchBoxHeight = totalHeight - mapHeight - tableHeight;
+
+          mapDiv.style.bottom = `${searchBoxHeight + tableHeight}px`;
+          searchBoxDiv.style.top = `${mapHeight}px`;
+          searchResultsDiv.style.height = `${tableHeight}px`;
+
+          map.resize();
+        }
+
+
+      mapboxgl.accessToken = 'pk.eyJ1IjoiZGdyemVzaWstY3NkIiwiYSI6ImNsaWFsOHJpZjAzeG8zZ3BtZGM1Z2JmcWkifQ.0wrP4PZx4Q8wt8IYh0w6IA';
+
+      var map;
+      var geojsonData; // Variable to store the GeoJSON data
+      var filteredData = [];
+      var popup = new mapboxgl.Popup({
+        closeButton: false,
+        closeOnClick: false
+      });
+
+      map = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/dgrzesik-csd/cliluzdiz010s01qh4b0yg49u',
+        center: [0, 0],
+        zoom: 1
+      });
+
+      map.on('load', function() {
+        fetch('https://gist.githubusercontent.com/coredatascientist/f8345d835f634cadf524875275aea0c1/raw/9b3289ec7f3fefa7d2e23dd09ef62773a538c376/CSD_Projects.json')
+          .then(response => response.json())
+          .then(data => {
+            // Add a unique id to each feature for the Mapbox filter
+            data.features = data.features.map((feature, index) => {
+              feature.id = index;
+              return feature;
+            });
+
+            geojsonData = data; // Store the data for use in the search function
+
+            map.addSource('my-data', {
+              type: 'geojson',
+              data: geojsonData
+            });
+
+            map.addLayer({
+              id: 'my-layer',
+              type: 'circle',
+              source: 'my-data',
+              paint: {
+                'circle-radius': 5,
+                'circle-color': 'hsla(89, 0%, 100%, 0.74)',
+                'circle-stroke-color': 'hsl(107, 0%, 0%)',
+                'circle-stroke-width': 1,
+                'circle-stroke-opacity': 0.34
+              }
+            });
+
+            // Display the popup on 'mousemove' event
+            map.on('mousemove', 'my-layer', function(e) {
+              var properties = e.features[0].properties;
+              var coordinates = e.features[0].geometry.coordinates.slice();
+
+              var html = '';
+              for (var key in properties) {
+                html += '<strong>' + key + '</strong>: ' + properties[key] + '<br>';
+              }
+
+              popup.setLngLat(coordinates)
+                .setHTML(html)
+                .addTo(map)
+                .setMaxWidth('none'); // Remove the maximum width limitation for the popup
+            });
+
+            // Display the popup on 'click' event
+            map.on('click', 'my-layer', function(e) {
+              var properties = e.features[0].properties;
+              var coordinates = e.features[0].geometry.coordinates.slice();
+
+              var html = '';
+              for (var key in properties) {
+                html += '<strong>' + key + '</strong>: ' + properties[key] + '<br>';
+              }
+
+              popup.setLngLat(coordinates)
+                .setHTML(html)
+                .addTo(map)
+                .setMaxWidth('none'); // Remove the maximum width limitation for the popup
+            });
+
+            // Add event listeners for 'search-layer'
+            map.on('mousemove', 'search-layer', function(e) {
+              var properties = e.features[0].properties;
+              var coordinates = e.features[0].geometry.coordinates.slice();
+
+              var html = '';
+              for (var key in properties) {
+                html += '<strong>' + key + '</strong>: ' + properties[key] + '<br>';
+              }
+
+              popup.setLngLat(coordinates)
+                .setHTML(html)
+                .addTo(map)
+                .setMaxWidth('none'); // Remove the maximum width limitation for the popup
+            });
+
+            map.on('click', 'search-layer', function(e) {
+              var properties = e.features[0].properties;
+              var coordinates = e.features[0].geometry.coordinates.slice();
+
+              var html = '';
+              for (var key in properties) {
+                html += '<strong>' + key + '</strong>: ' + properties[key] + '<br>';
+              }
+
+              popup.setLngLat(coordinates)
+                .setHTML(html)
+                .addTo(map)
+                .setMaxWidth('none'); // Remove the maximum width limitation for the popup
+            });
+          });
+      });
+
     </script>
     <div id="search-results"></div>
   </div>
-  <script>
-    mapboxgl.accessToken = 'pk.eyJ1IjoiZGdyemVzaWstY3NkIiwiYSI6ImNsaWFsOHJpZjAzeG8zZ3BtZGM1Z2JmcWkifQ.0wrP4PZx4Q8wt8IYh0w6IA';
-
-    var map;
-    var geojsonData; // Variable to store the GeoJSON data
-    var filteredData = [];
-    var popup = new mapboxgl.Popup({
-      closeButton: false,
-      closeOnClick: false
-    });
-
-    map = new mapboxgl.Map({
-      container: 'map',
-      style: 'mapbox://styles/dgrzesik-csd/cliluzdiz010s01qh4b0yg49u',
-      center: [0, 0],
-      zoom: 1
-    });
-
-    map.on('load', function() {
-      fetch('https://gist.githubusercontent.com/coredatascientist/f8345d835f634cadf524875275aea0c1/raw/9b3289ec7f3fefa7d2e23dd09ef62773a538c376/CSD_Projects.json')
-        .then(response => response.json())
-        .then(data => {
-          // Add a unique id to each feature for the Mapbox filter
-          data.features = data.features.map((feature, index) => {
-            feature.id = index;
-            return feature;
-          });
-
-          geojsonData = data; // Store the data for use in the search function
-
-          map.addSource('my-data', {
-            type: 'geojson',
-            data: geojsonData
-          });
-
-          map.addLayer({
-            id: 'my-layer',
-            type: 'circle',
-            source: 'my-data',
-            paint: {
-              'circle-radius': 5,
-              'circle-color': 'hsla(89, 0%, 100%, 0.74)',
-              'circle-stroke-color': 'hsl(107, 0%, 0%)',
-              'circle-stroke-width': 1,
-              'circle-stroke-opacity': 0.34
-            }
-          });
-
-          // Display the popup on 'mousemove' event
-          map.on('mousemove', 'my-layer', function(e) {
-            var properties = e.features[0].properties;
-            var coordinates = e.features[0].geometry.coordinates.slice();
-
-            var html = '';
-            for (var key in properties) {
-              html += '<strong>' + key + '</strong>: ' + properties[key] + '<br>';
-            }
-
-            popup.setLngLat(coordinates)
-              .setHTML(html)
-              .addTo(map)
-              .setMaxWidth('none'); // Remove the maximum width limitation for the popup
-          });
-
-          // Display the popup on 'click' event
-          map.on('click', 'my-layer', function(e) {
-            var properties = e.features[0].properties;
-            var coordinates = e.features[0].geometry.coordinates.slice();
-
-            var html = '';
-            for (var key in properties) {
-              html += '<strong>' + key + '</strong>: ' + properties[key] + '<br>';
-            }
-
-            popup.setLngLat(coordinates)
-              .setHTML(html)
-              .addTo(map)
-              .setMaxWidth('none'); // Remove the maximum width limitation for the popup
-          });
-
-          // Add event listeners for 'search-layer'
-          map.on('mousemove', 'search-layer', function(e) {
-            var properties = e.features[0].properties;
-            var coordinates = e.features[0].geometry.coordinates.slice();
-
-            var html = '';
-            for (var key in properties) {
-              html += '<strong>' + key + '</strong>: ' + properties[key] + '<br>';
-            }
-
-            popup.setLngLat(coordinates)
-              .setHTML(html)
-              .addTo(map)
-              .setMaxWidth('none'); // Remove the maximum width limitation for the popup
-          });
-
-          map.on('click', 'search-layer', function(e) {
-            var properties = e.features[0].properties;
-            var coordinates = e.features[0].geometry.coordinates.slice();
-
-            var html = '';
-            for (var key in properties) {
-              html += '<strong>' + key + '</strong>: ' + properties[key] + '<br>';
-            }
-
-            popup.setLngLat(coordinates)
-              .setHTML(html)
-              .addTo(map)
-              .setMaxWidth('none'); // Remove the maximum width limitation for the popup
-          });
-        });
-    });
-
-  </script>
 </body>
 </html>
