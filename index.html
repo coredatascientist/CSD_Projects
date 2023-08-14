@@ -192,7 +192,8 @@
       });
 
       map.on('load', function() {
-        fetch('https://gist.githubusercontent.com/coredatascientist/f8345d835f634cadf524875275aea0c1/raw/9b3289ec7f3fefa7d2e23dd09ef62773a538c376/CSD_Projects.json')
+        // original data fetch('https://gist.githubusercontent.com/coredatascientist/f8345d835f634cadf524875275aea0c1/raw/9b3289ec7f3fefa7d2e23dd09ef62773a538c376/CSD_Projects.json')
+        fetch('https://gist.githubusercontent.com/coredatascientist/4510d2b1fa382adc589da596c81cf86f/raw/8df7b48e41c495d1edbfe8738f1abface7b6ee31/Projects.geojson')  
           .then(response => response.json())
           .then(data => {
             // Add a unique id to each feature for the Mapbox filter
