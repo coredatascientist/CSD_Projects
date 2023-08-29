@@ -1,36 +1,60 @@
 <!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8" />
+<!-- saved from url=(0046)file:///Users/dustingrzesik/Desktop/index.html -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  
   <title>CSD Facility Projects Map</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="https://api.mapbox.com/mapbox-gl-js/v2.4.1/mapbox-gl.js"></script>
-  <link href="https://api.mapbox.com/mapbox-gl-js/v2.4.1/mapbox-gl.css" rel="stylesheet" />
+  <script src="./CSD Facility Projects Map_files/mapbox-gl.js"></script>
+  <link href="./CSD Facility Projects Map_files/mapbox-gl.css" rel="stylesheet">
   <style>
+    * {font-family: "Open Sans", sans-serif;}
+    button {
+      padding: 10px 20px;
+      background-color: #f1f1f1;
+      color: black;
+      border: 1px solid black;
+      border-radius: 4px;
+      cursor: pointer;
+      }
+
     body { margin: 0; padding: 0; }
     #map { position: absolute; top: 0; bottom: 50%; width: 100%; }
-    #search-box { position: absolute; top: 50%; bottom: 0; width: 100%; background: #fff; padding: 10px; overflow-y: scroll; }
-    #search-input { width: 100%; padding: 10px; }
     #search-button { margin-top: 10px; }
+    #search-box {
+      position: absolute;
+      top: 50%;
+      bottom: 0;
+      width: 200px%;
+      background: #fff;
+      padding: 10px;
+      overflow-y: scroll;
+      }
+
+    #search-input {
+      width: 200px;
+      padding: 10px;
+      }
+      
     #search-results { margin-top: 20px; padding-left: 10px; padding-right: 10px; }  /* Added padding to the sides */
-    #search-results table { border-collapse: collapse; width: 100%; font-family: "Helvetica", sans-serif; font-size: 10pt; }
+    #search-results table { border-collapse: collapse; width: 100%; font-family: "Open Sans", sans-serif; font-size: 10pt; }
     #search-results table, #search-results th, #search-results td { border: 1px solid #ddd; padding: 8px; }
     #search-results th { padding-top: 12px; padding-bottom: 12px; text-align: left; background-color: #f1f1f1; color: black; }  /* Updated background color to light grey */
-    .button { padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    .button { padding: 10px 20px; background-color: #f1f1f1; color: black; border: none; border-radius: 4px; cursor: pointer; }
     .mapboxgl-popup-content { max-height: 200px; max-width: 300px; overflow-y: auto; }
   </style>
 </head>
+
 <body>
-  <div id="map"></div>
+ <div id="map"></div>
   <div id="search-box">
     <input type="text" id="search-input" placeholder="Search..." onkeydown="handleSearchKeyPress(event)">
-    <button id="search-button" onclick="performSearch()">Search</button>
-    <button class="button" onclick="exportFilteredTableToTabDelimited('search-table', 'filtered-data.txt')">Download Filtered as Tab-Delimited Text</button>
-    <button class="button" onclick="location.reload()">Refresh</button>
+    <button id="search-button" onclick="performSearch()">Start Search</button>
+    <button class="button" onclick="exportFilteredTableToTabDelimited(&#39;search-table&#39;, &#39;filtered-data.txt&#39;)">Download Filtered Data as Tab-Delimited Text</button>
+    <button class="button" onclick="location.reload()">Clear Search</button>
     <div>
-      Map Height: <input type="range" id="map-height-range" min="0" max="100" step="1" value="50" oninput="adjustMapSize(this.value)">
+      Adjust Map Height: <input type="range" id="map-height-range" min="0" max="100" step="1" value="50" oninput="adjustMapSize(this.value)">
     </div>
-    <button class="button" onclick="showAllPopups()">Show All Popups</button>
+ 
     <script>
       function handleSearchKeyPress(event) {
         if (event.key === "Enter") {
@@ -238,6 +262,10 @@
                 .setMaxWidth('none'); // Remove the maximum width limitation for the popup
             });
 
+            map.on('mouseleave', 'my-layer', function() {
+              popup.remove();
+            });
+
             // Display the popup on 'click' event
             map.on('click', 'my-layer', function(e) {
               var properties = e.features[0].properties;
@@ -253,6 +281,9 @@
                 .addTo(map)
                 .setMaxWidth('none'); // Remove the maximum width limitation for the popup
             });
+            map.on('mouseleave', 'my-layer', function() {
+              popup.remove();
+            });            
           });
 
         // Display the popup on 'mousemove' event for the original points
@@ -280,6 +311,9 @@
               .addTo(map)
               .setMaxWidth('none'); // Remove the maximum width limitation for the popup
           }
+        map.on('mouseleave', 'my-layer', function() {
+              popup.remove();
+            });
         });
 
         // Display the popup on 'click' event for the original points
@@ -306,11 +340,15 @@
               .setHTML(html)
               .addTo(map)
           }
+        map.on('mouseleave', 'my-layer', function() {
+              popup.remove();
+            });
         });
 
       });
     </script>
     <div id="search-results"></div>
   </div>
-</body>
-</html>
+
+
+</body></html>
