@@ -6,8 +6,8 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <script src="https://api.mapbox.com/mapbox-gl-js/v2.4.1/mapbox-gl.js"></script>
-  <link href="https://api.mapbox.com/mapbox-gl-js/v2.4.1/mapbox-gl.css" rel="stylesheet" />
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.css" rel="stylesheet">
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.js"></script>
   <style>
     * {font-family: "Open Sans", sans-serif;}
     button {
@@ -200,53 +200,58 @@
       }
 
 
-      mapboxgl.accessToken = 'pk.eyJ1IjoiZGdyemVzaWstY3NkIiwiYSI6ImNsaWFsOHJpZjAzeG8zZ3BtZGM1Z2JmcWkifQ.0wrP4PZx4Q8wt8IYh0w6IA';
+    mapboxgl.accessToken = 'pk.eyJ1IjoiZGdyemVzaWstY3NkIiwiYSI6ImNsaWFsOHJpZjAzeG8zZ3BtZGM1Z2JmcWkifQ.0wrP4PZx4Q8wt8IYh0w6IA';
 
-      var map;
-      var geojsonData; // Variable to store the GeoJSON data
-      var filteredData = [];
-      var popup = new mapboxgl.Popup({
-        closeButton: false,
-        closeOnClick: false
+var map;
+var geojsonData = null; // Initialize GeoJSON data variable
+
+// Create popup object
+var popup = new mapboxgl.Popup({
+  closeButton: false,
+  closeOnClick: false
+});
+
+// Initialize the map
+map = new mapboxgl.Map({
+  container: 'map',
+  style: 'mapbox://styles/dgrzesik-csd/cliluzdiz010s01qh4b0yg49u',
+  center: [-93.2, 44.9],
+  zoom: 3
+
+});
+
+// Wait for the map to load
+map.on('load', function() {
+
+  // Load new data and set up the map accordingly
+  fetch('https://gist.githubusercontent.com/coredatascientist/79698c0e67393a70a84afde83d1f9521/raw/65aa5a49b5a27b6e7f4b2742d0d1ce19ab117db0/20230829ProjectMap.geojson')  
+    .then(response => response.json())
+    .then(data => {
+      // Add a unique id to each feature for the Mapbox filter
+      data.features = data.features.map((feature, index) => {
+        feature.id = index;
+        return feature;
       });
 
-      map = new mapboxgl.Map({
-        container: 'map',
-        style: 'mapbox://styles/dgrzesik-csd/cliluzdiz010s01qh4b0yg49u',
-        center: [0, 0],
-        zoom: 1
+      geojsonData = data; // Store the data for use in the search function
+
+      map.addSource('my-data', {
+        type: 'geojson',
+        data: geojsonData
       });
 
-      map.on('load', function() {
-        geojsonData = null; // Clear existing data
-        fetch('https://gist.githubusercontent.com/coredatascientist/79698c0e67393a70a84afde83d1f9521/raw/65aa5a49b5a27b6e7f4b2742d0d1ce19ab117db0/20230829ProjectMap.geojson')  
-          .then(response => response.json())
-          .then(data => {
-            // Add a unique id to each feature for the Mapbox filter
-            data.features = data.features.map((feature, index) => {
-              feature.id = index;
-              return feature;
-            });
-
-            geojsonData = data; // Store the data for use in the search function
-
-            map.addSource('my-data', {
-              type: 'geojson',
-              data: geojsonData
-            });
-
-            map.addLayer({
-              id: 'my-layer',
-              type: 'circle',
-              source: 'my-data',
-              paint: {
-                'circle-radius': 5,
-                'circle-color': 'hsla(89, 0%, 100%, 0.74)',
-                'circle-stroke-color': 'hsl(107, 0%, 0%)',
-                'circle-stroke-width': 1,
-                'circle-stroke-opacity': 0.34
-              }
-            });
+      map.addLayer({
+        id: 'my-layer',
+        type: 'circle',
+        source: 'my-data',
+        paint: {
+          'circle-radius': 5,
+          'circle-color': 'hsla(89, 0%, 100%, 0.74)',
+          'circle-stroke-color': 'hsl(107, 0%, 0%)',
+          'circle-stroke-width': 1,
+          'circle-stroke-opacity': 0.34
+        }
+      });
 
             // Display the popup on 'mousemove' event
             map.on('mousemove', 'my-layer', function(e) {
