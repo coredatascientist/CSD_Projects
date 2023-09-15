@@ -224,7 +224,7 @@ map = new mapboxgl.Map({
 map.on('load', function() {
 
   // Load new data and set up the map accordingly
-  fetch('https://gist.githubusercontent.com/coredatascientist/79698c0e67393a70a84afde83d1f9521/raw/65aa5a49b5a27b6e7f4b2742d0d1ce19ab117db0/20230829ProjectMap.geojson')  
+  fetch('https://gist.githubusercontent.com/coredatascientist/3d002beb4c35684176cbe54c1a74be7e/raw/88395863e6b7a39890189833b4c57404792f3762/20230915_Website_Project_table.geojson')  
     .then(response => response.json())
     .then(data => {
       // Add a unique id to each feature for the Mapbox filter
