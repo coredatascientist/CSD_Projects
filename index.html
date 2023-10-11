@@ -19,22 +19,27 @@
       cursor: pointer;
       }
 
-body { margin: 0; padding: 0; }
+body {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
 
 #map {
-    position: absolute;
-    top: 0;
-    bottom: 20%; /* Adjusted to make the map take 80% of the page */
+    flex: 1;
+    height: 80%; /* 80% of the available height */
     width: 100%;
 }
 
-#search-button { margin-top: 10px; }
+#search-button {
+    margin-top: 10px;
+}
 
 #search-box {
-    position: absolute;
-    top: 20%; /* Adjusted to align with the map bottom */
-    bottom: 0;
-    width: 100%; /* Adjusted to take up the entire width */
+    height: 20%; /* 20% of the available height */
+    width: 100%;
     background: #fff;
     padding: 10px;
     overflow-y: scroll;
