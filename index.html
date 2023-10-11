@@ -54,8 +54,12 @@ body {
     margin-top: 20px;
     padding-left: 10px;
     padding-right: 10px;
-    max-height: 400px; /* Set a maximum height for the container */
-    overflow-y: auto; /* Add vertical scrolling if the content exceeds the height */
+}
+
+#search-results-container {
+    max-width: 60%; /* Adjust the percentage or pixel value to control the width of the container */
+    margin: 0 auto; /* Center the container horizontally on the page */
+    overflow-x: auto; /* Add horizontal scrolling if the content overflows the container */
 }
 
 #search-results table {
