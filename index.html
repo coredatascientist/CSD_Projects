@@ -56,12 +56,6 @@ body {
     padding-right: 10px;
 }
 
-#search-results-container {
-    max-width: 60%; /* Adjust the percentage or pixel value to control the width of the container */
-    margin: 0 auto; /* Center the container horizontally on the page */
-    overflow-x: auto; /* Add horizontal scrolling if the content overflows the container */
-}
-
 #search-results table {
     border-collapse: collapse;
     width: 100%;
@@ -81,7 +75,6 @@ body {
     background-color: #f1f1f1; /* Updated background color to light grey */
     color: black;
 }
-
 
 .button {
     padding: 10px 20px;
@@ -108,6 +101,8 @@ body {
     <button id="search-button" onclick="performSearch()">Start Search</button>
     <button class="button" onclick="exportFilteredTableToTabDelimited(&#39;search-table&#39;, &#39;filtered-data.txt&#39;)">Download Filtered Data as Tab-Delimited Text</button>
     <button class="button" onclick="location.reload()">Clear Search</button>
+    <div>
+      Adjust Map Height: <input type="range" id="map-height-range" min="0" max="100" step="1" value="50" oninput="adjustMapSize(this.value)">
     </div>
  
     <script>
@@ -138,60 +133,43 @@ body {
       }
 
       function performSearch() {
-  var searchInput = document.getElementById('search-input');
-  var searchValue = searchInput.value.toLowerCase();
-  filteredData = geojsonData.features.filter(function (feature) {
-    for (var key in feature.properties) {
-      if (
-        typeof feature.properties[key] === 'string' &&
-        feature.properties[key].toLowerCase().includes(searchValue)
-      ) {
-        return true;
-      }
-    }
-    return false;
-  });
-
-  var searchResults = document.getElementById('search-results');
-  searchResults.innerHTML = '';
-
-  if (filteredData.length > 0) {
-    var table = document.createElement('table');
-    table.className = 'search-table';
-    table.id = 'search-table';
-
-    // Calculate the maximum height for the table (e.g., 400 pixels)
-    var maxHeight = 400;
-    var rowCount = filteredData.length;
-    var rowHeight = 30; // Adjust this value based on your table's styling
-
-    // Set the table's height and add a scrollbar if needed
-    if (rowCount * rowHeight > maxHeight) {
-      table.style.height = maxHeight + 'px';
-      table.style.overflowY = 'scroll';
-    } else {
-      table.style.height = 'auto';
-    }
-
-    var headerRow = table.insertRow();
-    for (var key in filteredData[0].properties) {
-      var th = document.createElement('th');
-      th.innerHTML = key;
-      headerRow.appendChild(th);
-    }
-
-    filteredData.forEach(function (feature) {
-      var row = table.insertRow();
-      for (var key in feature.properties) {
-        var cell = row.insertCell();
-        cell.innerHTML = feature.properties[key];
-      }
-    });
-
-    searchResults.appendChild(table);
-  } else {
-    searchResults.innerHTML = 'No results found.';
-  }
+        var searchInput = document.getElementById('search-input');
+        var searchValue = searchInput.value.toLowerCase();
+        filteredData = geojsonData.features.filter(function(feature) {
+          for (var key in feature.properties) {
+            if (typeof feature.properties[key] === 'string' && feature.properties[key].toLowerCase().includes(searchValue)) {
+              return true;
+            }
+          }
+          return false;
+        });
+        var filterIDs = filteredData.map(function(feature) {
+          return feature.id;
+        });
+        map.setFilter('my-layer', ['in', 'id'].concat(filterIDs));
+        var searchResults = document.getElementById('search-results');
+        searchResults.innerHTML = '';
+        if (filteredData.length > 0) {
+          var table = document.createElement('table');
+          table.className = 'search-table';
+          table.id = 'search-table';
+          var headerRow = table.insertRow();
+          for (var key in filteredData[0].properties) {
+            var th = document.createElement('th');
+            th.innerHTML = key;
+            headerRow.appendChild(th);
+          }
+          filteredData.forEach(function(feature) {
+            var row = table.insertRow();
+            for (var key in feature.properties) {
+              var cell = row.insertCell();
+              cell.innerHTML = feature.properties[key];
+            }
+          });
+          searchResults.appendChild(table);
+        } else {
+          searchResults.innerHTML = 'No results found.';
+        }
         if (map.getLayer('search-layer')) {
           map.removeLayer('search-layer');
           map.removeSource('search-layer');
@@ -286,7 +264,7 @@ map = new mapboxgl.Map({
   container: 'map',
   style: 'mapbox://styles/dgrzesik-csd/cliluzdiz010s01qh4b0yg49u',
   center: [-93.2, 44.9],
-  zoom: 1
+  zoom: 0
 
 });
 
