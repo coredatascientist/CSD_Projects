@@ -19,18 +19,27 @@
       cursor: pointer;
       }
 
-    body { margin: 0; padding: 0; }
-    #map { position: absolute; top: 0; bottom: 10%; width: 100%; }
-    #search-button { margin-top: 10px; }
-    #search-box {
-      position: absolute;
-      top: 10%;
-      bottom: 0;
-      width: 200px%;
-      background: #fff;
-      padding: 10px;
-      overflow-y: scroll;
-      }
+body { margin: 0; padding: 0; }
+
+#map {
+    position: absolute;
+    top: 0;
+    bottom: 20%; /* Adjusted to make the map take 80% of the page */
+    width: 100%;
+}
+
+#search-button { margin-top: 10px; }
+
+#search-box {
+    position: absolute;
+    top: 20%; /* Adjusted to align with the map bottom */
+    bottom: 0;
+    width: 100%; /* Adjusted to take up the entire width */
+    background: #fff;
+    padding: 10px;
+    overflow-y: scroll;
+}
+
 
     #search-input {
       width: 200px;
